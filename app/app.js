@@ -466,3 +466,260 @@
     console.log('[app] history-list ready');
   });
 })();
+
+// =======================================================================
+// monthly-summary feature (issue #3).
+// Read-only view: pick a month, see รายรับรวม / รายจ่ายรวม / คงเหลือ and a
+// per-category breakdown for THAT month. Reads the same localStorage key
+// ("tws.transactions") that #1 writes and #2 lists — it never mutates it.
+//
+// Two deliberate guards against the known pitfalls:
+//   1) Month filtering is a pure STRING compare on the ISO date
+//      (date.slice(0,7) === "YYYY-MM"), never Date parsing, so it is immune
+//      to timezone off-by-one at month boundaries.
+//   2) Every render() recomputes from storage for the picker's CURRENT value.
+//      No computed totals are cached at module scope, so switching months can
+//      never show stale/previous-month values.
+//
+// Own IIFE so it does not touch #1/#2's merged code; the tiny storage/format
+// helpers are duplicated to match their conventions exactly.
+// =======================================================================
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'tws.transactions';
+
+  // On-screen copy — must match the spec exactly. Keep as constants to avoid typos.
+  var MSG = {
+    totalIncome: 'รายรับรวม',
+    totalExpense: 'รายจ่ายรวม',
+    balance: 'คงเหลือ',
+    empty: 'ไม่มีรายการในเดือนนี้'
+  };
+
+  var TYPE_LABELS = { income: 'รายรับ', expense: 'รายจ่าย' };
+
+  // ---- storage layer (same shape/behaviour as issue #1) ----------------
+
+  function loadTransactions() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.error('[app] cannot read transactions:', err);
+      return [];
+    }
+  }
+
+  function formatAmount(n) {
+    return Number(n).toLocaleString('th-TH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Signed baht string. Emits an explicit leading "-" for negatives so the
+  // balance AC ("show a minus sign when expense > income") holds regardless of
+  // any locale minus-glyph quirk. Positives/zero get no sign.
+  function formatBaht(n) {
+    var sign = n < 0 ? '-' : '';
+    return sign + formatAmount(Math.abs(n)) + ' ฿';
+  }
+
+  // Current month as LOCAL YYYY-MM (matches the user's calendar, not UTC).
+  function currentMonthISO() {
+    var d = new Date();
+    var local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 7);
+  }
+
+  // Month key of a transaction from its ISO date STRING — no Date parsing.
+  function monthOf(tx) {
+    return (tx && typeof tx.date === 'string') ? tx.date.slice(0, 7) : '';
+  }
+
+  // Pure compute: totals + per-category maps for one month. Category maps are
+  // the source of truth; totals are summed FROM them, so a category breakdown
+  // can never disagree with its total (spec reconciliation AC). Called fresh on
+  // every render — holds no state between calls.
+  function summarize(list, month) {
+    var incomeByCat = {};
+    var expenseByCat = {};
+    var count = 0;
+
+    (list || []).forEach(function (tx) {
+      if (monthOf(tx) !== month) return;      // string-only month filter
+      var amt = Number(tx.amount);
+      if (!(amt > 0)) return;                 // ignore missing/0/negative/NaN
+      var cat = tx.category || 'อื่นๆ';
+      if (tx.type === 'income') {
+        incomeByCat[cat] = (incomeByCat[cat] || 0) + amt;
+        count++;
+      } else if (tx.type === 'expense') {
+        expenseByCat[cat] = (expenseByCat[cat] || 0) + amt;
+        count++;
+      }
+    });
+
+    function sumValues(map) {
+      return Object.keys(map).reduce(function (s, k) { return s + map[k]; }, 0);
+    }
+
+    var totalIncome = sumValues(incomeByCat);
+    var totalExpense = sumValues(expenseByCat);
+
+    return {
+      count: count,
+      totalIncome: totalIncome,
+      totalExpense: totalExpense,
+      balance: totalIncome - totalExpense,
+      incomeByCat: incomeByCat,
+      expenseByCat: expenseByCat
+    };
+  }
+
+  // Expose the pure helpers to Node for unit testing. Inert in the browser:
+  // `module` is undefined there, so this branch never runs client-side.
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      summarize: summarize,
+      formatBaht: formatBaht,
+      currentMonthISO: currentMonthISO,
+      monthOf: monthOf
+    };
+  }
+
+  // ---- boot ------------------------------------------------------------
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var monthInput = document.getElementById('summary-month');
+    var body = document.getElementById('summary-body');
+    if (!monthInput || !body) {
+      console.warn('[app] monthly-summary elements not found — nothing to wire up');
+      return;
+    }
+
+    // Default selection = current month.
+    if (!monthInput.value) monthInput.value = currentMonthISO();
+
+    function statCard(label, valueText, cls) {
+      var card = document.createElement('div');
+      card.className = 'summary-stat' + (cls ? ' ' + cls : '');
+      var l = document.createElement('span');
+      l.className = 'summary-stat-label';
+      l.textContent = label;
+      var v = document.createElement('span');
+      v.className = 'summary-stat-value';
+      v.textContent = valueText;
+      card.appendChild(l);
+      card.appendChild(v);
+      return card;
+    }
+
+    function buildTotals(data) {
+      var wrap = document.createElement('div');
+      wrap.className = 'summary-totals';
+      wrap.appendChild(statCard(MSG.totalIncome, formatBaht(data.totalIncome), 'is-income'));
+      wrap.appendChild(statCard(MSG.totalExpense, formatBaht(data.totalExpense), 'is-expense'));
+      wrap.appendChild(statCard(
+        MSG.balance,
+        formatBaht(data.balance),
+        data.balance < 0 ? 'is-negative' : 'is-positive'
+      ));
+      return wrap;
+    }
+
+    // One side (income or expense) of the category breakdown. Returns null when
+    // that side has no categories in the month (so empty sides aren't shown).
+    function buildGroupSide(titleLabel, map, sideCls) {
+      var keys = Object.keys(map);
+      if (keys.length === 0) return null;
+      keys.sort(function (a, b) {
+        if (map[b] !== map[a]) return map[b] - map[a]; // largest amount first
+        return a < b ? -1 : (a > b ? 1 : 0);           // stable tie-break by name
+      });
+
+      var group = document.createElement('div');
+      group.className = 'summary-group ' + sideCls;
+
+      var h = document.createElement('h3');
+      h.className = 'summary-group-title';
+      h.textContent = titleLabel;
+      group.appendChild(h);
+
+      var ul = document.createElement('ul');
+      ul.className = 'summary-cat-list';
+      keys.forEach(function (cat) {
+        var li = document.createElement('li');
+        li.className = 'summary-cat';
+        var name = document.createElement('span');
+        name.className = 'summary-cat-name';
+        name.textContent = cat;
+        var amt = document.createElement('span');
+        amt.className = 'summary-cat-amount';
+        amt.textContent = formatBaht(map[cat]);
+        li.appendChild(name);
+        li.appendChild(amt);
+        ul.appendChild(li);
+      });
+      group.appendChild(ul);
+      return group;
+    }
+
+    function buildBreakdown(data) {
+      var wrap = document.createElement('div');
+      wrap.className = 'summary-breakdown';
+      var inc = buildGroupSide(TYPE_LABELS.income, data.incomeByCat, 'side-income');
+      var exp = buildGroupSide(TYPE_LABELS.expense, data.expenseByCat, 'side-expense');
+      if (inc) wrap.appendChild(inc);
+      if (exp) wrap.appendChild(exp);
+      return wrap;
+    }
+
+    // Full recompute for the currently-selected month. Reads storage AND the
+    // picker value fresh every call — no cached totals, so month switches never
+    // show stale values.
+    function render() {
+      var month = monthInput.value || currentMonthISO();
+      var data = summarize(loadTransactions(), month);
+
+      body.innerHTML = '';
+
+      // Empty month: show the empty state, NOT ambiguous 0 totals (per spec).
+      if (data.count === 0) {
+        var empty = document.createElement('p');
+        empty.className = 'summary-empty';
+        empty.textContent = MSG.empty;
+        body.appendChild(empty);
+        return;
+      }
+
+      body.appendChild(buildTotals(data));
+      body.appendChild(buildBreakdown(data));
+    }
+
+    // Recompute on any month change. `change` fires when a month is committed;
+    // `input` covers live spinner/typing. Both just call the pure recompute.
+    monthInput.addEventListener('change', render);
+    monthInput.addEventListener('input', render);
+
+    // Live-refresh after issue #1 saves a new transaction. Additive listener
+    // owned by #3 — it does not modify #add-section's code. setTimeout(...,0)
+    // guarantees it runs AFTER #1's synchronous save regardless of handler
+    // registration order; try/catch keeps any summary error off the add flow.
+    var addForm = document.getElementById('add-form');
+    if (addForm) {
+      addForm.addEventListener('submit', function () {
+        setTimeout(function () {
+          try { render(); } catch (err) { console.error('[app] summary refresh failed:', err); }
+        }, 0);
+      });
+    }
+
+    render(); // show the current month on load (survives refresh)
+
+    console.log('[app] monthly-summary ready');
+  });
+})();

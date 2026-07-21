@@ -67,7 +67,13 @@
 
     <section id="summary-section" aria-labelledby="summary-heading">
       <h2 id="summary-heading">สรุปยอดรายเดือน</h2>
-      <p class="placeholder">ยังไม่พัฒนา (issue #3)</p>
+
+      <div class="form-row summary-controls">
+        <label for="summary-month">เลือกเดือน</label>
+        <input type="month" id="summary-month" name="summary-month">
+      </div>
+
+      <div id="summary-body" class="summary-body" aria-live="polite"></div>
     </section>
   </main>
 
