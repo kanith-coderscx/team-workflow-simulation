@@ -250,3 +250,219 @@
     console.log('[app] add-transaction ready');
   });
 })();
+
+// =======================================================================
+// history-list feature (issue #2).
+// Shows ALL transactions from the same localStorage key, newest -> oldest,
+// with per-row delete. Confirmation is INLINE in the DOM (an expanding
+// confirm bar on the row) — native window.confirm/alert/prompt are banned
+// here because they block automated testing and are poor UX.
+//
+// Kept in its own IIFE so it does not touch issue #1's merged code. The few
+// tiny storage helpers are duplicated to match #1's conventions exactly.
+// =======================================================================
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'tws.transactions';
+
+  // On-screen copy — must match the spec exactly. Keep as constants to avoid typos.
+  var MSG = {
+    empty: 'ยังไม่มีรายการ',
+    deleteBtn: 'ลบ',
+    confirmDelete: 'ยืนยันการลบรายการนี้?',
+    confirmYes: 'ยืนยัน',
+    confirmNo: 'ยกเลิก'
+  };
+
+  var TYPE_LABELS = { income: 'รายรับ', expense: 'รายจ่าย' };
+
+  // ---- storage layer (same shape/behaviour as issue #1) ----------------
+
+  function loadTransactions() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.error('[app] cannot read transactions:', err);
+      return [];
+    }
+  }
+
+  function saveTransactions(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  // Remove one transaction by id and persist. Returns the surviving list.
+  function deleteTransaction(id) {
+    var next = loadTransactions().filter(function (tx) { return tx.id !== id; });
+    saveTransactions(next);
+    return next;
+  }
+
+  function formatAmount(n) {
+    return Number(n).toLocaleString('th-TH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Newest -> oldest. Primary key: date (ISO YYYY-MM-DD compares chronologically
+  // as a string). Tie-break on same date: id descending — ids are timestamp-based
+  // (tx_<base36 time>_<rand>) so the later-added row sorts on top. Does not mutate
+  // the stored order.
+  function sortNewestFirst(list) {
+    return list.slice().sort(function (a, b) {
+      var da = a.date || '';
+      var db = b.date || '';
+      if (da < db) return 1;
+      if (da > db) return -1;
+      var ia = a.id || '';
+      var ib = b.id || '';
+      if (ia < ib) return 1;
+      if (ia > ib) return -1;
+      return 0;
+    });
+  }
+
+  // ---- boot ------------------------------------------------------------
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var listEl = document.getElementById('history-list');
+    if (!listEl) {
+      console.warn('[app] history-list container not found — nothing to wire up');
+      return;
+    }
+
+    // Which row (if any) is currently showing its inline delete confirmation.
+    var pendingDeleteId = null;
+
+    function makeButton(text, className, onClick) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = className;
+      btn.textContent = text;
+      btn.addEventListener('click', onClick);
+      return btn;
+    }
+
+    // Inline confirm bar shown in place of a row's actions. No native dialog.
+    function buildConfirmBar(id) {
+      var bar = document.createElement('div');
+      bar.className = 'tx-confirm';
+      bar.setAttribute('role', 'alertdialog');
+      bar.setAttribute('aria-label', MSG.confirmDelete);
+
+      var text = document.createElement('span');
+      text.className = 'tx-confirm-text';
+      text.textContent = MSG.confirmDelete;
+
+      var yes = makeButton(MSG.confirmYes, 'tx-confirm-yes danger', function () {
+        deleteTransaction(id);          // remove from localStorage
+        pendingDeleteId = null;
+        render();                       // remove from screen immediately, re-sort
+      });
+
+      var no = makeButton(MSG.confirmNo, 'tx-confirm-no', function () {
+        pendingDeleteId = null;         // cancel: nothing removed
+        render();
+      });
+
+      bar.appendChild(text);
+      bar.appendChild(yes);
+      bar.appendChild(no);
+      return bar;
+    }
+
+    function buildRow(tx) {
+      var isIncome = tx.type === 'income';
+
+      var li = document.createElement('li');
+      li.className = 'tx-item ' + (isIncome ? 'tx-income' : 'tx-expense');
+
+      var typeSpan = document.createElement('span');
+      typeSpan.className = 'tx-type';
+      typeSpan.textContent = TYPE_LABELS[tx.type] || tx.type;
+
+      var catSpan = document.createElement('span');
+      catSpan.className = 'tx-cat';
+      catSpan.textContent = tx.category;
+
+      var amtSpan = document.createElement('span');
+      amtSpan.className = 'tx-amount';
+      amtSpan.textContent = (isIncome ? '+' : '-') + formatAmount(tx.amount) + ' ฿';
+
+      var dateSpan = document.createElement('span');
+      dateSpan.className = 'tx-date';
+      dateSpan.textContent = tx.date;
+
+      li.appendChild(typeSpan);
+      li.appendChild(catSpan);
+      li.appendChild(amtSpan);
+      li.appendChild(dateSpan);
+
+      if (tx.note) {
+        var noteSpan = document.createElement('span');
+        noteSpan.className = 'tx-note';
+        noteSpan.textContent = tx.note;
+        li.appendChild(noteSpan);
+      }
+
+      if (pendingDeleteId === tx.id) {
+        li.classList.add('tx-confirming');
+        li.appendChild(buildConfirmBar(tx.id));
+      } else {
+        var delBtn = makeButton(MSG.deleteBtn, 'tx-delete danger', function () {
+          pendingDeleteId = tx.id;      // ask before removing anything
+          render();
+        });
+        li.appendChild(delBtn);
+      }
+
+      return li;
+    }
+
+    function render() {
+      var list = sortNewestFirst(loadTransactions());
+      listEl.innerHTML = '';
+
+      if (list.length === 0) {
+        pendingDeleteId = null;
+        var empty = document.createElement('li');
+        empty.className = 'tx-empty';
+        empty.textContent = MSG.empty;
+        listEl.appendChild(empty);
+        return;
+      }
+
+      // If the pending row no longer exists (e.g. deleted elsewhere), drop the flag.
+      if (pendingDeleteId && !list.some(function (tx) { return tx.id === pendingDeleteId; })) {
+        pendingDeleteId = null;
+      }
+
+      list.forEach(function (tx) {
+        listEl.appendChild(buildRow(tx));
+      });
+    }
+
+    // Keep this list in sync on a single page: when issue #1's add form saves a
+    // new item, refresh history too. This is an additive listener owned by #2 —
+    // it does not modify #add-section's code. setTimeout(...,0) guarantees it runs
+    // AFTER #1's synchronous save regardless of handler registration order, and the
+    // try/catch keeps any history error from affecting the add flow.
+    var addForm = document.getElementById('add-form');
+    if (addForm) {
+      addForm.addEventListener('submit', function () {
+        setTimeout(function () {
+          try { render(); } catch (err) { console.error('[app] history refresh failed:', err); }
+        }, 0);
+      });
+    }
+
+    render(); // show whatever is already saved (survives refresh)
+
+    console.log('[app] history-list ready');
+  });
+})();
