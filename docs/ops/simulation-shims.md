@@ -21,3 +21,10 @@ is replaced by an explicit convention below. **A shim is never presented as the 
 |------------|------|------------------|------|
 | Day 1 | S3 | board setup | PM owns all card moves for the run |
 | Day 1 | S5 | #1, #2, #3 | issues filed via `gh issue create`, form fields reproduced |
+| Day 2 | S1,S2,S4 | #1/PR#4 | draft→ready as review request; COMMENT+label as approval; Pages `pr-1/` as deploy |
+
+## Deviations (process changed mid-run because of a finding)
+
+| # | From | To | Reason |
+|---|------|----|--------|
+| D-01 | Stage ③ "Create a branch from issue" (`gh issue develop`) | Plain `git branch feature/<n>-slug develop` (no Development link) | The linked branch auto-closed the issue on merge, bypassing the "Done = verified, not merged" gate — see `learn/findings.md` F-01. Applied from issue #2 onward. |
