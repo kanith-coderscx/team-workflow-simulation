@@ -687,8 +687,15 @@
 
       body.innerHTML = '';
 
-      // Empty month: show the empty state, NOT ambiguous 0 totals (per spec).
+      // AC1: the three labels (รายรับรวม / รายจ่ายรวม / คงเหลือ) must be visible
+      // whenever the page opens on the default (current) month AND on every month
+      // — including an empty one. So the totals card is ALWAYS rendered; an empty
+      // month simply shows 0.00 for each.
+      body.appendChild(buildTotals(data));
+
       if (data.count === 0) {
+        // AC6: an empty month additionally shows the explicit empty-state note,
+        // so the zero totals are never mistaken for missing/broken data.
         var empty = document.createElement('p');
         empty.className = 'summary-empty';
         empty.textContent = MSG.empty;
@@ -696,7 +703,6 @@
         return;
       }
 
-      body.appendChild(buildTotals(data));
       body.appendChild(buildBreakdown(data));
     }
 
