@@ -1,0 +1,65 @@
+name: "🐛 Bug Report"
+description: "รายงานข้อบกพร่อง — ต้องมีขั้นตอนทำซ้ำ (reproduce) และผลที่คาดหวัง เพื่อให้ dev แก้ได้โดยไม่ต้องเดา"
+title: "[Bug] "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: อาการที่พบ (What happened)
+      description: เกิดอะไรขึ้น สั้น ๆ ตรงประเด็น
+      placeholder: กดปุ่ม Save ในหน้า Profile แล้วหน้าค้าง ข้อมูลไม่ถูกบันทึก
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro-steps
+    attributes:
+      label: ขั้นตอนทำซ้ำ (Steps to reproduce)
+      description: ทีละขั้นตั้งแต่ต้น — dev ต้องทำตามแล้วเจออาการเดียวกันได้
+      placeholder: |
+        1. Login ด้วย account ประเภท admin
+        2. ไปที่ Profile → แก้ไขชื่อ
+        3. กด Save
+        4. หน้าค้างที่ spinner ไม่มี error แสดง
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: ผลที่คาดหวัง vs ผลที่เกิดจริง (Expected vs Actual)
+      placeholder: |
+        Expected: บันทึกสำเร็จ แสดง toast "Saved" แล้วกลับหน้า Profile
+        Actual: spinner ค้างไม่หาย ต้อง refresh หน้า และข้อมูลไม่ถูกบันทึก
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment / URL ที่พบ
+      description: พบบน environment ไหน (test server / develop / production), browser และ device อะไร
+      placeholder: "test server (https://test.example.com), Chrome 138 บน macOS"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: "หลังสร้าง issue แล้ว อย่าลืมติด label `priority:` ให้ตรงกับที่เลือก"
+      options:
+        - "p1 — production พัง / user ใช้งานไม่ได้"
+        - "p2 — ฟีเจอร์หลักมีปัญหา แต่มีทางเลี่ยง"
+        - "p3 — ปัญหาเล็ก / cosmetic"
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: หลักฐาน (screenshot / video / log) — optional แต่ช่วยได้มาก
+      description: ลากไฟล์มาวางในช่องนี้ได้เลย
+    validations:
+      required: false

@@ -1,0 +1,79 @@
+name: "🚀 Feature / Requirement"
+description: "สำหรับ BA/SA เปิดงานพัฒนาใหม่ — ฟอร์มบังคับ Definition of Ready: ต้องมี spec, acceptance criteria และ test steps ครบก่อนงานจะถือว่า Ready"
+title: "[Feature] "
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Definition of Ready** — issue นี้จะถูก dev หยิบไปทำได้ก็ต่อเมื่อทุกช่องบังคับ (*) ถูกกรอกครบและชัดเจน
+        ถ้ายังไม่ครบ ให้เก็บไว้ใน Backlog ก่อน อย่าลากเข้าคอลัมน์ Ready
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: สรุปงาน (Summary)
+      description: งานนี้คืออะไร ทำเพื่อใคร แก้ปัญหาอะไร — 2-4 บรรทัด
+      placeholder: |
+        เพิ่มหน้า login ด้วย email/password สำหรับ user ทั่วไป เพื่อทดแทนการ login ผ่าน LINE อย่างเดียว
+    validations:
+      required: true
+
+  - type: input
+    id: spec-link
+    attributes:
+      label: ลิงก์ Spec / Requirement document
+      description: ลิงก์ไปยังเอกสาร spec ฉบับเต็ม (Google Docs, Notion, Figma ฯลฯ)
+      placeholder: "https://..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria (checklist — ไม่ใช่ prose)
+      description: |
+        เขียนเป็น checklist ที่ test ได้จริงทีละข้อ — BA/SA จะใช้ข้อเหล่านี้ติ๊กผลตอน test บน PR
+        รูปแบบแนะนำ: "เมื่อ [ทำอะไร] แล้ว [ผลที่ต้องเกิด]"
+      placeholder: |
+        - [ ] เมื่อกรอก email + password ถูกต้องแล้วกด Login → เข้าสู่หน้า Dashboard ภายใน 3 วินาที
+        - [ ] เมื่อกรอก password ผิด → แสดงข้อความ "อีเมลหรือรหัสผ่านไม่ถูกต้อง" โดยไม่บอกว่าผิดช่องไหน
+        - [ ] เมื่อกรอก email ผิด format → ปุ่ม Login กดไม่ได้ และช่อง email ขึ้นกรอบแดง
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: test-steps
+    attributes:
+      label: Test Steps (สำหรับผู้ test ที่ไม่ใช่ dev)
+      description: ขั้นตอนการเตรียมและเข้าถึงจุดที่จะ test — account ที่ใช้, เมนูที่ต้องเข้า, ข้อมูลที่ต้องมีก่อน
+      placeholder: |
+        1. Login ด้วย test account: tester01@example.com
+        2. ไปที่เมนู Settings → Users
+        3. ทดสอบตาม Acceptance Criteria ทีละข้อ
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: "หลังสร้าง issue แล้ว อย่าลืมติด label `priority:` ให้ตรงกับที่เลือก (GitHub form ตั้ง label จาก dropdown ให้อัตโนมัติไม่ได้)"
+      options:
+        - "p1 — ด่วน/บล็อกงานอื่น"
+        - "p2 — สำคัญ ทำในรอบนี้"
+        - "p3 — ทำเมื่อมีคิวว่าง"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: หมายเหตุเพิ่มเติม (optional)
+      description: ข้อจำกัดทางเทคนิค, งานที่ต้องเสร็จก่อน (dependency), สิ่งที่อยู่นอกขอบเขต (out of scope)
+    validations:
+      required: false
