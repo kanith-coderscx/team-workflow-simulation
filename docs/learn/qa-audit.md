@@ -13,4 +13,7 @@ ready-for-test signal and it lives on the PR, never in a chat-style ping.
 
 | Sim day | Gate | Issue/PR | Verdict | Finding |
 |---------|------|----------|---------|---------|
-| _(entries appended during the run)_ | | | | |
+| Day 1 | DoR | #1 | ✅ PASS | spec link ✓, AC checklist (7, all "เมื่อ…→…" form) ✓, test steps (9) ✓. Eligible for Ready. |
+| Day 1 | DoR | #2 | ✅ PASS | spec link ✓, AC checklist (7) ✓, test steps (8) ✓. Eligible for Ready. |
+| Day 1 | DoR | #3 | ✅ PASS | spec link ✓, AC checklist (7) ✓, test steps (8) ✓. Eligible for Ready. |
+| Day 1 | DoR-note | all | ℹ️ note | Every AC is browser-observable and several pin exact on-screen copy text — good testability, but that means wording drift will (correctly) fail testing. Flagged for Dev awareness. |
