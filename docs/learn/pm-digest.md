@@ -24,3 +24,14 @@ per-event spam. It reports where *work* is, never who is "fast" or "slow".
 - **F-01 fix (D-01) proven:** the plain-git branch left #2 **open** at merge; BA/SA closed it after verifying on develop. "merge ≠ Done" now actually holds.
 - **Backlog surfaced:** #1 add-list vs #2 history-list don't sync on delete until reload — logged, not blocking (correct scoping by BA/SA).
 - **Stuck:** none. #3 monthly-summary (last of Ready) is next.
+
+## Day 4 (พฤหัส 2026-07-23)
+
+- **#3 monthly-summary → Done, but with the week's one rework loop.** Round 1: BA/SA browser-tested and failed **AC1** (totals labels hidden when the current month is empty on open) → Request Changes → card back to In Progress. Dev fixed (always render labels + keep empty note) → re-review round 2 → all 7 ACs pass → approve → merge → verify on develop → Done.
+- **Cycle:** 2 review rounds, 1 bounce. The bounce was a genuine spec-interpretation gap (F-02), caught exactly where it should be — stage ⑤.
+- **Gate:** plain-git branch again kept #3 open at merge; BA/SA closed after verify.
+
+## Day 5 (ศุกร์ 2026-07-24) — retro
+
+- All three issues Done. See `retro-week-1.md`. Two findings (F-01 tooling, F-02 spec), one deviation (D-01) now standing practice, one backlog item (list sync).
+- Board is trustworthy: every Done reflects a BA/SA acceptance, never a bare merge.

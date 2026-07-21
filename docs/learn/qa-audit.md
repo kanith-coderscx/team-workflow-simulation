@@ -23,3 +23,8 @@ ready-for-test signal and it lives on the PR, never in a chat-style ping.
 | Day 3 | ready-signal | #2/PR#5 | ✅ PASS | Draft→ready with "Deployed to" `pr-2/` filled, URL 200. |
 | Day 3 | evidence | #2/PR#5 | ✅ PASS | BA/SA ticked all 7 ACs from a real browser with env+commit+date; also raised an out-of-scope backlog observation (list sync) without blocking — correct scoping. Dev did not tick. |
 | Day 3 | **merged ≠ Done** | #2/PR#5 | ✅ PASS | With fix D-01 (plain-git branch, no Development link) the merge left #2 **OPEN**; BA/SA closed it manually only after verifying on develop. Gate now enforced as designed — F-01 fix confirmed effective. |
+| Day 4 | ready-signal | #3/PR#6 | ✅ PASS | Draft→ready, "Deployed to" `pr-3/` filled, URL 200. |
+| Day 4 | evidence (round 1) | #3/PR#6 | ✅ PASS (process) | BA/SA browser-tested all 7 ACs, **failed AC1** with a concrete repro (empty current month hides the totals labels), attached env+commit+date, and used Request Changes — evidence-driven rejection, not a silent re-ping. Correct behaviour. See finding F-02. |
+| Day 4 | rework routing | #3/PR#6 | ✅ PASS | Request Changes routed the card back to In Progress with a written reason; Dev fixed and re-requested review. Failure flowed back visibly, not via chat. |
+| Day 4 | evidence (round 2) | #3/PR#6 | ✅ PASS | AC1 re-verified fixed on browser + AC2–7 regression re-checked. Only then did BA/SA tick all 7 and approve. |
+| Day 4 | **merged ≠ Done** | #3/PR#6 | ✅ PASS | Plain-git branch again left #3 OPEN at merge; BA/SA closed after verifying the fix on develop. |

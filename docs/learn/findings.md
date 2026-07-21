@@ -11,3 +11,11 @@ evidence for the weekly retro (stage ⑧).
 - **This run:** BA/SA's develop verify passed anyway, so nothing broken shipped — but that was luck, not the gate.
 - **Fix applied mid-run (from #2 onward):** create the branch with plain `git` (`git branch feature/<n>-slug develop`) instead of `gh issue develop`, so there is **no Development link** and the merge leaves the issue open for BA/SA to close after verifying. Linkage to the issue is still provided by `Refs #n` in the PR. Logged as deviation D-01 in `ops/simulation-shims.md`.
 - **For the real team to decide (retro):** either (a) don't use the "Create a branch" button — lose one-click linkage, keep the gate; or (b) keep the button and accept that "close" happens at merge, then make stage ⑦ a *re-open-if-fails* verification rather than a *close-after-verify* one. (a) preserves the design intent; (b) weakens it. Recommend (a).
+
+## F-02 — AC1 and AC6 were mutually unreconciled in the spec (caught the intended way, in test)
+
+- **Severity:** medium — a spec-quality gap, not a tooling gap. The process caught it correctly.
+- **What happened (issue #3):** AC1 says "on opening the summary, show the labels รายรับรวม/รายจ่ายรวม/คงเหลือ (default = current month)". AC6 says "an empty month shows «ไม่มีรายการในเดือนนี้»". Neither AC states what happens when the **current (default) month is empty on open** — both apply at once. The Dev's first implementation resolved the ambiguity by hiding the whole totals card on empty months, which satisfied AC6 but broke AC1 when the current month had no data (e.g. a first-time user).
+- **How it was caught:** BA/SA browser-tested the exact "open on an empty current month" case, saw the labels missing, and filed Request Changes citing AC1 with a concrete repro — one review round. Dev fixed it (always render the labels at 0.00 and append the empty note), BA/SA re-verified.
+- **Why it's a good outcome:** this is exactly what stage ⑤ exists for. A checkbox-only or dev-self-certified process would have shipped the gap. The exact-copy-text + strict browser testing surfaced a real interpretation conflict.
+- **For the retro:** BA/SA should reconcile overlapping ACs when writing specs (state the empty-current-month case explicitly). Consider a spec-template checklist item: "for each 'on open' AC, define behaviour when the default data set is empty."
