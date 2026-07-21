@@ -166,3 +166,45 @@ select[aria-invalid="true"] {
 
 .tx-date { color: var(--muted); font-size: 0.8rem; width: 100%; }
 .tx-note { color: var(--muted); font-size: 0.85rem; width: 100%; }
+
+/* --- history-list feature (issue #2) --- */
+
+#history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* Small per-row delete button (reuses .danger colour). */
+.tx-delete {
+  width: auto;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+}
+
+/* Highlight a row while its inline confirmation is open. */
+.tx-item.tx-confirming { outline: 2px solid var(--expense); outline-offset: -2px; }
+
+/* Inline delete confirmation — replaces native window.confirm(). */
+.tx-confirm {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
+}
+.tx-confirm-text { font-size: 0.85rem; font-weight: 600; margin-right: auto; }
+.tx-confirm-yes,
+.tx-confirm-no {
+  width: auto;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+}
+.tx-confirm-no { background: var(--muted); }
