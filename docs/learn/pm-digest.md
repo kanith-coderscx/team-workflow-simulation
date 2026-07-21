@@ -17,3 +17,10 @@ per-event spam. It reports where *work* is, never who is "fast" or "slow".
 - **Cycle:** 1 review round, 0 bounces. Dev flagged 6 fail-closed UNVERIFIED items (no browser in dev env); BA/SA confirmed all 6 on a real browser.
 - **🔴 Real finding F-01:** the "Create a branch from issue" link auto-closed #1 at merge, *before* BA/SA's develop verify — the "merge ≠ Done" gate was bypassed by GitHub. Fix adopted from #2: create branches with plain `git` (no Development link). See `learn/findings.md`.
 - **Stuck:** none. #2 history-list is next (top of Ready).
+
+## Day 3 (พุธ 2026-07-22)
+
+- **#2 history-list shipped end-to-end** → Done. 1 review round, 0 bounces. Inline delete-confirm (no native dialog), sort/persist/empty-state all verified on a real browser.
+- **F-01 fix (D-01) proven:** the plain-git branch left #2 **open** at merge; BA/SA closed it after verifying on develop. "merge ≠ Done" now actually holds.
+- **Backlog surfaced:** #1 add-list vs #2 history-list don't sync on delete until reload — logged, not blocking (correct scoping by BA/SA).
+- **Stuck:** none. #3 monthly-summary (last of Ready) is next.
